@@ -1,16 +1,65 @@
-/* Kush Klub — one-page vendor shop demo. Mobile-first, dark. */
+/*
+ * Cipher shop — mobile-first, dark. One-page vendor shop.
+ *
+ * Design tokens below are COPIED VALUES from the Cipher app at
+ * Cipher main 0a322cb (read-only; nothing imported, no shared build):
+ *   - tailwind.config.cjs   -> base/surface/surfaceLight/borderDark
+ *   - src/index.css :root   -> text/muted/borders/status colours
+ *   - docs/UI-INVENTORY.md  -> accent (what primary buttons actually
+ *                              render: blue-600), radius steps
+ *                              (control=rounded-2xl, sheet=rounded-3xl,
+ *                              pill=rounded-full), type scale
+ *   - docs/VISION.md        -> overall product look (same product)
+ * Every colour and radius in this file goes through a variable; the two
+ * intentional deviations from Cipher's exact values are --bg (#09090b,
+ * the shop spec's background, vs Cipher's #000000) and --accent
+ * (#2563eb, blue-600, per UI-INVENTORY's token table) — see README
+ * "assumptions".
+ */
 
 :root {
-  --bg: #0b0e12;
-  --surface: #14191f;
-  --surface-2: #1a212a;
-  --line: #232b35;
-  --text: #e9ecef;
-  --muted: #8a95a1;
-  --accent: #3ecf8e;
-  --accent-dim: #2b8f63;
-  --amber: #e2b53e;
-  --qr: #f3f5f7;
+  /* foundations (tailwind.config.cjs, src/index.css @ 0a322cb) */
+  --bg: #09090b;                       /* shop spec; Cipher base is #000000 */
+  --surface: #0a0a0a;                  /* tailwind surface */
+  --surface-2: #171717;                /* tailwind surfaceLight */
+  --surface-3: #1d1d1d;                /* index.css --panel-alt */
+  --line: rgba(255, 255, 255, 0.10);   /* border-white/10 (dominant border) */
+  --line-subtle: rgba(255, 255, 255, 0.05); /* border-white/5 */
+  --line-strong: rgba(255, 255, 255, 0.12); /* index.css --border-strong */
+  --text: #f5f5f5;                     /* index.css --text */
+  --muted: #9ca3af;                    /* index.css --text-muted */
+  --faint: #6b7280;                    /* index.css --text-subtle */
+
+  /* accent (docs/UI-INVENTORY.md token table: blue-600) */
+  --accent: #2563eb;
+  --accent-hover: #3b82f6;             /* hover:bg-blue-500; index.css --accent */
+  --accent-soft: rgba(59, 130, 246, 0.12); /* index.css --accent-soft */
+
+  /* status (index.css) */
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #fcd34d;                  /* UI-INVENTORY warning token */
+  --warning-soft: rgba(252, 211, 77, 0.08);
+
+  /* scrim behind a themed background image (commit 3) */
+  --scrim: linear-gradient(rgba(9, 9, 11, 0.78), rgba(9, 9, 11, 0.92));
+
+  /* radius steps (UI-INVENTORY: rounded-2xl / rounded-3xl / rounded-full) */
+  --r-control: 16px;
+  --r-sheet: 24px;
+  --r-pill: 999px;
+  --r-input: 12px;                     /* rounded-xl */
+
+  /* type steps (UI-INVENTORY type scale) */
+  --fs-caption: 11px;
+  --fs-meta: 13px;
+  --fs-body: 15px;
+  --fs-title: 24px;
+
+  /* set at runtime when the vendor theme carries an accent */
+  --on-accent: #ffffff;
+  /* set at runtime when the vendor theme carries a background image */
+  --bg-image: none;
 }
 
 * { box-sizing: border-box; }
@@ -23,10 +72,33 @@ html, body {
 body {
   background: var(--bg);
   color: var(--text);
+  /* system font stack — the app declares Inter but never loads it, so it
+     renders on the same system stack this page uses */
   font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
+
+/* themed background sits behind a dark scrim so text always reads */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: var(--bg-image) center / cover no-repeat;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--scrim);
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.has-theme-bg::after { opacity: 1; }
 
 .phone {
   max-width: 430px;
@@ -43,11 +115,11 @@ body {
   to   { opacity: 1; transform: none; }
 }
 
-.muted { color: var(--muted); font-size: 14px; }
+.muted { color: var(--muted); font-size: var(--fs-meta); }
 .label {
   margin: 0 0 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -58,7 +130,7 @@ body {
 .none-sub {
   padding: 0 2px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
   line-height: 1.7;
 }
 
@@ -67,7 +139,7 @@ body {
   color: var(--text);
 }
 
-/* ---------- Menu ---------- */
+/* ---------- Header / brand ---------- */
 
 .brand {
   display: flex;
@@ -82,10 +154,20 @@ body {
   height: 44px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: var(--r-input);
   background: var(--surface-2);
   color: var(--accent);
   border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+/* vendor logo, forced to a circle so any aspect ratio works */
+.brand-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .brand-text h1 {
@@ -95,6 +177,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .verified {
@@ -102,11 +185,43 @@ body {
   color: var(--accent);
 }
 
+/* vendor status badge chip next to the name */
+.vendor-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
 .brand-sub {
   margin: 2px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
+
+/* announcement card under the header */
+.announcement {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  margin: 0 0 14px;
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  color: var(--text);
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+}
+
+.announcement svg { flex: none; margin-top: 2px; color: var(--accent); }
+
+/* ---------- Items ---------- */
 
 .items {
   list-style: none;
@@ -121,10 +236,10 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 14px;
+  padding: 12px 14px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-control);
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -133,21 +248,81 @@ body {
 }
 
 .item:active { background: var(--surface-2); transform: scale(.99); }
-.item:focus-visible { outline: 2px solid var(--accent-dim); outline-offset: 2px; }
+.item:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+
+/* item image, or the deterministic gradient standing in for it */
+.item-thumb {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-input);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-subtle);
+}
+
+.item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 .item-info { flex: 1; min-width: 0; }
-.item-name { margin: 0; font-size: 16px; font-weight: 600; }
-.item-sub  { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.item-name { margin: 0; font-size: var(--fs-body); font-weight: 600; }
+.item-sub  { margin: 2px 0 0; color: var(--muted); font-size: var(--fs-meta); }
 
 .price {
   flex: none;
   color: var(--accent);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  font-size: 16px;
+  font-size: var(--fs-body);
 }
 
 .item .chev { flex: none; color: var(--muted); }
+
+/* pinned item — "top shelf" card above the list */
+.topshelf {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  margin: 0 0 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sheet);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.topshelf:active { transform: scale(.99); }
+.topshelf:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+
+.topshelf .item-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-control);
+}
+
+.topshelf-tag {
+  display: inline-flex;
+  margin: 0 0 2px;
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+/* ---------- Footer ---------- */
 
 .menu-foot {
   display: flex;
@@ -157,6 +332,15 @@ body {
   margin-top: 22px;
   color: var(--muted);
   font-size: 12px;
+}
+
+.menu-foot .powered {
+  color: var(--faint);
+}
+
+.menu-foot .powered strong {
+  color: var(--muted);
+  font-weight: 600;
 }
 
 /* ---------- Order sheet ---------- */
@@ -176,14 +360,14 @@ body {
   place-items: center;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-input);
   color: var(--text);
   cursor: pointer;
   transition: background .12s ease;
 }
 
 .back:active { background: var(--surface-2); }
-.back:focus-visible { outline: 2px solid var(--accent-dim); outline-offset: 2px; }
+.back:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
 
 .order-title { flex: 1; font-size: 17px; font-weight: 700; }
 
@@ -201,19 +385,19 @@ body {
   padding: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-control);
   margin-bottom: 12px;
 }
 
 .order-item h2 { margin: 0; font-size: 17px; }
-.order-item p  { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.order-item p  { margin: 2px 0 0; color: var(--muted); font-size: var(--fs-meta); }
 
 .qr-card {
   padding: 18px;
   text-align: center;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-control);
   margin-bottom: 12px;
 }
 
@@ -221,8 +405,8 @@ body {
   width: min(100%, 236px);
   margin: 0 auto;
   padding: 10px;
-  background: var(--qr);
-  border-radius: 10px;
+  background: #f5f5f5; /* QR quiet zone must stay light; not a theme colour */
+  border-radius: var(--r-input);
 }
 
 .qr-holder svg {
@@ -234,20 +418,20 @@ body {
 .qr-hint {
   margin: 10px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--fs-meta);
 }
 
 .addr-block {
   padding: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--r-control);
   margin-bottom: 16px;
 }
 
 .addr {
   margin: 0 0 12px;
-  font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font: var(--fs-meta)/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color: var(--text);
   word-break: break-all;
   overflow-wrap: anywhere;
@@ -261,19 +445,43 @@ body {
   gap: 8px;
   padding: 11px 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-input);
   background: var(--accent);
-  color: #08110c;
+  color: var(--on-accent);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 700;
   cursor: pointer;
   transition: filter .12s ease;
 }
 
 .copy:active { filter: brightness(.9); }
-.copy:focus-visible { outline: 2px solid var(--accent-dim); outline-offset: 2px; }
-.copy.copied { background: var(--surface-2); color: var(--accent); border: 1px solid var(--accent-dim); }
+.copy:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+.copy.copied { background: var(--surface-2); color: var(--accent); border: 1px solid var(--accent-hover); }
+
+/* secondary action: copy a message for the vendor's channel */
+.msg-plug {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+
+.msg-plug:active { background: var(--surface-2); color: var(--text); }
+.msg-plug:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+.msg-plug.copied { color: var(--success); border-color: var(--success); }
 
 .status-pill {
   display: flex;
@@ -281,10 +489,10 @@ body {
   justify-content: center;
   gap: 8px;
   padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(226, 181, 62, .35);
-  background: rgba(226, 181, 62, .08);
-  color: var(--amber);
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(252, 211, 77, 0.35);
+  background: var(--warning-soft);
+  color: var(--warning);
   font-size: 14px;
   font-weight: 600;
 }
@@ -293,7 +501,7 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--amber);
+  background: var(--warning);
   animation: pulse 1.6s ease-in-out infinite;
 }
 
