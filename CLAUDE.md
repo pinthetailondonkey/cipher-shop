@@ -8,7 +8,7 @@ A static shop page a vendor pins in a chat channel. Plain HTML/CSS/JS.
 - No emoji. Inline SVG only.
 - Mobile first: 390x844, no horizontal scroll.
 - Dark: #09090b background, light text, one accent.
-- Keep the page under ~50KB.
+- Keep the gzipped payload under 25KB. Raw bytes do not matter.
 - No new dependencies except one vendored QR file in vendor/.
 
 ## How to work
