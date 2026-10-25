@@ -18,42 +18,60 @@ build step, and no network activity: the vendor data is inlined in
 
 - `index.html` — no `?v=`, falls back to the first entry in `vendors.js`.
 - `index.html?v=kushklub` — renders the vendor whose key in `vendors.js`
-  is `kushklub` (what the vendor pins in their channel).
+  is `kushklub` (what the vendor pins in their channel). The lookup is
+  lowercased and trimmed, so `?v=KushKlub` and `?v= kushklub` work too.
 - `index.html?v=someone-else` — a handle that is not in `vendors.js`
   shows a clean "No such vendor" state, never a blank page.
 
 ## Adding a vendor
 
-1. Open `vendors.js` and add an entry to `VENDORS`, keyed by the handle
-   the vendor will put after `?v=`. Lowercase letters, digits and
-   hyphens keep URLs clean. The first entry in the object is also the
-   default that no-`?v=` visitors get, so leave it in place.
-2. Give each entry: `name`, `tagline` (plain text; it is set with
-   `textContent`, so no HTML), `addresses` (demo address strings) and
-   `items` (`id`, `name`, `weight`, `price`, `btc`).
+1. Open `vendors.js`, copy the TEMPLATE block (or either example) and
+   fill every field, keyed by the handle the vendor will put after
+   `?v=`. Lowercase letters, digits and hyphens keep URLs clean. The
+   first entry in the object is the default for no-`?v=` visitors —
+   leave it in place.
+2. Fill in `name` and `tagline` (plain text; everything is set with
+   `textContent`, so no HTML), `verified` (shows the tick), the demo
+   `addresses` under `payment`, and `items` (`name`, `weight`, `price`,
+   `btc`).
 3. Hand the vendor their link: `<wherever this is hosted>/index.html?v=<handle>`.
 
-Address rotation is tracked per vendor under
-`shop.<handle>.addrIndex` in `localStorage`, so vendors on this one
-deploy never share a slot counter.
+Address rotation is tracked per vendor under `shop.<handle>.addrIndex`
+in `localStorage`, so vendors on this one deploy never share a slot
+counter.
+
+## Getting an xpub
+
+Not used by the page yet (a later version will derive fresh addresses
+from it), but this is where each wallet hides it. Every wallet: account
+→ tap the three dots / account settings → "show xpub" / "account
+information" → copy the string starting `zpub` (or `xpub`).
+
+- **BlueWallet** — open the wallet → three-dot menu → "Show wallet
+  xpub" → copy the `zpub`. (Enable "Export/Show xpub" in settings if
+  the entry is hidden.)
+- **Sparrow** — open the wallet → **Accounts** tab (first, "Unknown"
+  account) → the "Extended Public Key" field → copy the `zpub`.
+- **Electrum** — Wallet → Information → "Master Public Key" → copy the
+  `xpub`. (Set the key type to p2wpkh / SegWit bech32 when creating the
+  wallet, or the derivation will not match.)
 
 ## What it does
 
-- **Menu screen** — vendor name with a verified tick, and four items
-  (name, weight, price). Tapping an item opens the order sheet.
+- **Menu screen** — vendor name with a verified tick (only when the
+  vendor entry says `verified: true`), and the item list (name, weight,
+  price). Tapping an item opens the order sheet.
 - **Order sheet** — shows the item and price, a scannable QR code, the
   Bitcoin address in monospace with a copy button, and a status pill
   reading "waiting for payment". A back control returns to the menu.
 
 ## What is fake
 
-- **The addresses are pre-derived.** Twelve demo address strings are
-  hardcoded per vendor in `vendors.js` and handed out one per order
-  — the next unused one is
-  tracked in `localStorage`, so reloading the page does not reuse an
-  address. The pool is demo sample data, 12 deep; once exhausted it
-  cycles, and the sheet shows `slot n / 12` so you can see the rotation.
-  When the pool runs dry it cycles, and the sheet shows `(cycled)`.
+- **The addresses are pre-derived.** Demo address strings are hardcoded
+  per vendor in `vendors.js` and handed out one per order — the next
+  unused one is tracked in `localStorage`, so reloading the page does
+  not reuse an address. Once exhausted the pool cycles, and the sheet
+  shows `slot n / 12` (or the pool's depth) so you can see the rotation.
 - **The status pill does not watch the chain.** It always reads
   "waiting for payment"; there is no node, no Electrum server, no
   broadcast or confirmation logic of any kind.

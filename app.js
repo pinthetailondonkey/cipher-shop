@@ -18,7 +18,9 @@ const DEFAULT_HANDLE = Object.keys(VENDOR_LIST)[0] || '';
 // Handle comes from ?v=. Set and known -> that vendor; unset -> default.
 // Set and unknown -> VENDOR stays null and the boot path shows the
 // "no such vendor" state instead of a blank page.
-const REQUESTED_HANDLE = new URLSearchParams(window.location.search).get('v') || '';
+// ?v= is lowercased and trimmed, so ?v=KushKlub and ?v= kushklub work.
+const RAW_HANDLE = new URLSearchParams(window.location.search).get('v') || '';
+const REQUESTED_HANDLE = RAW_HANDLE.toLowerCase().trim();
 
 let VENDOR = null;
 let HANDLE = '';
@@ -40,7 +42,8 @@ if (REQUESTED_HANDLE) {
 // ---------------------------------------------------------------------
 
 const ADDR_KEY = 'shop.' + HANDLE + '.addrIndex';
-const ADDRESSES = VENDOR ? VENDOR.addresses : [];
+// The demo pool: next unused address per order, cycling when exhausted.
+const ADDRESSES = VENDOR && VENDOR.payment ? VENDOR.payment.addresses : (VENDOR ? VENDOR.addresses : []);
 let memIndex = 0;
 
 function loadIndex() {
@@ -150,6 +153,8 @@ function paintBrand() {
   document.title = VENDOR.name;
   $('brand-name').textContent = VENDOR.name;
   $('brand-sub').textContent = VENDOR.tagline;
+  // The template shape nests the pool under payment.addresses.
+  $('verified-tick').style.display = VENDOR.verified ? '' : 'none';
 }
 
 // ---------------------------------------------------------------------
