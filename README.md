@@ -31,10 +31,26 @@ build step, and no network activity: the vendor data is inlined in
    first entry in the object is the default for no-`?v=` visitors —
    leave it in place.
 2. Fill in `name` and `tagline` (plain text; everything is set with
-   `textContent`, so no HTML), `verified` (shows the tick), the demo
-   `addresses` under `payment`, and `items` (`name`, `weight`, `price`,
-   `btc`).
+   `textContent`, so no HTML), `verified` (shows the tick), an optional
+   `theme` (see below), the demo `addresses` under `payment`, and
+   `items` (`name`, `weight`, `price`, `btc`).
 3. Hand the vendor their link: `<wherever this is hosted>/index.html?v=<handle>`.
+
+### Theme
+
+A vendor entry may carry a `theme` object; omitting it (or any field in
+it) keeps the Cipher default:
+
+- `background` — an image URL rendered behind a fixed dark scrim
+  (`linear-gradient(rgba(9,9,11,.78), rgba(9,9,11,.92))`), so light text
+  always reads no matter how bright the image is.
+- `accent` — a hex colour (`#22c55e`, or the short `#2c5` form). An
+  invalid or empty value falls back to the default blue; the page never
+  breaks on a bad colour. Text on accent-filled controls is chosen from
+  the accent's WCAG luminance (dark text on light accents, white on
+  dark ones).
+- `logo` — an image URL, always forced to a circle (`object-fit: cover`)
+  so any aspect ratio works.
 
 Address rotation is tracked per vendor under `shop.<handle>.addrIndex`
 in `localStorage`, so vendors on this one deploy never share a slot
@@ -95,3 +111,17 @@ information" → copy the string starting `zpub` (or `xpub`).
   wallet camera, though the addresses themselves are demo samples.
 
 [qrcode-generator 1.4.4]: https://www.npmjs.com/package/qrcode-generator
+
+## Assumptions
+
+- The design tokens are copied values from the Cipher app at main
+  `0a322cb` (see the header comment in `style.css`). Two deliberate
+  deviations: the background stays `#09090b` (the shop spec) rather
+  than Cipher's `#000000`, and the accent is `#2563eb` (blue-600, what
+  the app's primary buttons actually render per UI-INVENTORY).
+- An invalid or unknown-shaped `theme` value is ignored field by field;
+  there is no all-or-nothing validation, so a bad `accent` with a good
+  `background` still themes the background.
+- A vendor without a `theme` at all renders exactly like the default —
+  the no-theme path is the most-seen version and is exercised by the
+  first example vendor.

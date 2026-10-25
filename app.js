@@ -35,6 +35,68 @@ if (REQUESTED_HANDLE) {
 }
 
 // ---------------------------------------------------------------------
+// Theme — optional vendor customisation. A vendor with no theme keeps
+// the Cipher default; that is the most-seen version.
+// ---------------------------------------------------------------------
+
+function clamp8(v) { return Math.max(0, Math.min(255, v)); }
+
+// '#rgb'/'#rrggbb' -> [r,g,b], or null when it is not a valid hex colour.
+function parseHex(hex) {
+  if (typeof hex !== 'string') return null;
+  const s = hex.trim();
+  let m = /^#([0-9a-f]{6})$/i.exec(s);
+  if (m) {
+    const n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  m = /^#([0-9a-f]{3})$/i.exec(s);
+  if (m) {
+    return m[1].split('').map(function (c) { return parseInt(c + c, 16); });
+  }
+  return null;
+}
+
+// WCAG relative luminance -> pick white or near-black accent text.
+function onColorFor(rgb) {
+  const lum = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+  return lum > 150 ? '#09090b' : '#ffffff';
+}
+
+function applyTheme(v) {
+  const rootStyle = document.documentElement.style;
+  const theme = v && v.theme ? v.theme : {};
+  const accentRgb = parseHex(theme.accent);
+
+  if (accentRgb) {
+    rootStyle.setProperty('--accent', 'rgb(' + accentRgb.join(',') + ')');
+    rootStyle.setProperty('--on-accent', onColorFor(accentRgb));
+    // soft fill + hover shade derived from the same accent
+    rootStyle.setProperty('--accent-soft',
+      'rgba(' + accentRgb.join(',') + ',0.12)');
+    rootStyle.setProperty('--accent-hover',
+      'rgb(' + accentRgb.map(function (c) { return clamp8(Math.round(c + (255 - c) * 0.25)); }).join(',') + ')');
+  }
+
+  const bg = theme.background;
+  if (typeof bg === 'string' && bg) {
+    rootStyle.setProperty('--bg-image', 'url("' + bg.replace(/"/g, '%22') + '")');
+    document.body.classList.add('has-theme-bg');
+  }
+
+  const logo = theme.logo;
+  if (typeof logo === 'string' && logo) {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.referrerPolicy = 'no-referrer';
+    img.src = logo;
+    const badge = $('brand-badge');
+    badge.textContent = '';
+    badge.appendChild(img);
+  }
+}
+
+// ---------------------------------------------------------------------
 // Address rotation — the vendor's next unused address, tracked in
 // localStorage (per vendor, so two vendors on one deploy do not share a
 // counter) so a reload does not reuse one. Storage failure (private
@@ -216,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
   paintBrand();
+  applyTheme(VENDOR);
   buildMenu();
   $('btn-back').addEventListener('click', () => showScreen('menu'));
   $('btn-copy').addEventListener('click', copyAddress);

@@ -16,6 +16,11 @@
     name: '',                         // display name, shown in the header
     tagline: '',                      // one line under the name (plain text)
     verified: false,                  // true shows the verified tick
+    theme: {                          // optional customisation; omit for the Cipher default
+      background: '',                 // image URL behind a dark scrim; '' keeps the plain bg
+      accent: '',                     // hex like '#22c55e'; invalid/empty falls back to default
+      logo: ''                        // image URL, always rendered as a circle; '' keeps the icon
+    },
     addresses: [                      // demo address pool, handed out one per order
       'bc1q...'                       //   in order; cycles when exhausted
     ],
@@ -37,6 +42,11 @@ const VENDORS = {
     name: 'Kush Klub',
     tagline: 'btc only · dm to order',
     verified: true,
+    theme: {
+      background: '',
+      accent: '',
+      logo: ''
+    },
     addresses: [
       'bc1qwhrr0d0zwnf9pr2vwz4l7afws8kzfcmlak005p',
       'bc1qh9zkxq93j5zecy8av2dhyu436jhgyr3uzkcqvc',
@@ -63,6 +73,11 @@ const VENDORS = {
     name: 'Northside',
     tagline: 'deliveries 4pm - midnight',
     verified: false,
+    theme: {
+      background: '',
+      accent: '#e11d48',
+      logo: ''
+    },
     addresses: [
       'bc1qwhrr0d0zwnf9pr2vwz4l7afws8kzfcmlak005p',
       'bc1qh9zkxq93j5zecy8av2dhyu436jhgyr3uzkcqvc',
