@@ -53,6 +53,20 @@ body {
   text-transform: uppercase;
 }
 
+/* ---------- Vendor not found ---------- */
+
+.none-sub {
+  padding: 0 2px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.none-sub code {
+  font-family: inherit;
+  color: var(--text);
+}
+
 /* ---------- Menu ---------- */
 
 .brand {

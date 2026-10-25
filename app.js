@@ -1,6 +1,7 @@
 /*
- * Kush Klub — one-page vendor shop demo.
- * All data is inlined (no fetch) so double-clicking index.html just works.
+ * Vendor shop — one-page order demo, rendered for the vendor picked by
+ * ?v= in the URL (see vendors.js). No fetch, so double-clicking
+ * index.html just works; no ?v= falls back to the first vendor.
  * This is a mock/demo: the addresses and BTC amounts are hardcoded samples
  * and nothing here talks to the Bitcoin network. See README.md.
  */
@@ -8,44 +9,38 @@
 'use strict';
 
 // ---------------------------------------------------------------------
-// Vendor data (inlined mock data)
+// Vendor selection (data lives in vendors.js, loaded before this script)
 // ---------------------------------------------------------------------
 
-const VENDOR = {
-  name: 'Kush Klub',
-  items: [
-    { id: 'lemon-haze', name: 'Lemon haze',   weight: '3.5g',    price: '$60',  btc: '0.00063' },
-    { id: 'gelato-41',  name: 'Gelato 41',    weight: '7g',      price: '$110', btc: '0.00115' },
-    { id: 'hash-1g',    name: 'Hash',         weight: '1g',      price: '$25',  btc: '0.00026' },
-    { id: 'gummies',    name: 'Sour gummies', weight: '10x10mg', price: '$40',  btc: '0.00042' }
-  ]
-};
+const VENDOR_LIST = window.VENDORS || {};
+const DEFAULT_HANDLE = Object.keys(VENDOR_LIST)[0] || '';
 
-// 12 pre-derived mock addresses. A later version will derive these from
-// the vendor's xpub; for the demo they are hardcoded sample strings and
-// each of the first 12 orders gets a different one (after that it cycles).
-const ADDRESSES = [
-  'bc1qwhrr0d0zwnf9pr2vwz4l7afws8kzfcmlak005p',
-  'bc1qh9zkxq93j5zecy8av2dhyu436jhgyr3uzkcqvc',
-  'bc1q284tar9q8kn6tkfcezqdjrk38nhkd8dwqj0ne2',
-  'bc1qeumpuh3sufdat7tg03xw3kjgrwcukn86h545ua',
-  'bc1q3vzwrzhpzp8z70jmhr72kkpdu07et7kp09f028',
-  'bc1qdz0u95tf7ukvsvnr53za60cym0q4twv2z6rxvu',
-  'bc1qx5wz2729g3uqx0lg3e9h034aas40ssk8ke9myf',
-  'bc1qeyur2gq4amvte8g2egs9ras26kw4zqszsk4fqn',
-  'bc1qk8klljsjrsacqwu4kntd4vsawf2lpl6rufrt79',
-  'bc1qyjef8hvm664nenarrvm49y8j80ejzpas54vs8n',
-  'bc1q0gzrvlwpzhydks79eurg8fampssch0ur9kyk70',
-  'bc1q6pc5g7zk8uz085mh0dwfkpm9lnj4g8q5eju5kn'
-];
+// Handle comes from ?v=. Set and known -> that vendor; unset -> default.
+// Set and unknown -> VENDOR stays null and the boot path shows the
+// "no such vendor" state instead of a blank page.
+const REQUESTED_HANDLE = new URLSearchParams(window.location.search).get('v') || '';
+
+let VENDOR = null;
+let HANDLE = '';
+if (REQUESTED_HANDLE) {
+  if (Object.prototype.hasOwnProperty.call(VENDOR_LIST, REQUESTED_HANDLE)) {
+    VENDOR = VENDOR_LIST[REQUESTED_HANDLE];
+    HANDLE = REQUESTED_HANDLE;
+  }
+} else {
+  VENDOR = VENDOR_LIST[DEFAULT_HANDLE];
+  HANDLE = DEFAULT_HANDLE;
+}
 
 // ---------------------------------------------------------------------
-// Address rotation — the next unused address, tracked in localStorage so a
-// reload does not reuse one. Storage failure (private mode, blocked site
-// data) falls back to an in-memory counter.
+// Address rotation — the vendor's next unused address, tracked in
+// localStorage (per vendor, so two vendors on one deploy do not share a
+// counter) so a reload does not reuse one. Storage failure (private
+// mode, blocked site data) falls back to an in-memory counter.
 // ---------------------------------------------------------------------
 
-const ADDR_KEY = 'kushklub.addrIndex';
+const ADDR_KEY = 'shop.' + HANDLE + '.addrIndex';
+const ADDRESSES = VENDOR ? VENDOR.addresses : [];
 let memIndex = 0;
 
 function loadIndex() {
@@ -146,6 +141,15 @@ function openOrder(item) {
 function showScreen(name) {
   $('screen-menu').hidden = name !== 'menu';
   $('screen-order').hidden = name !== 'order';
+  $('screen-unknown').hidden = name !== 'unknown';
+}
+
+// Fill the header (name, verified tick, tagline) and the tab title from
+// the vendor entry, since one index.html now serves several vendors.
+function paintBrand() {
+  document.title = VENDOR.name;
+  $('brand-name').textContent = VENDOR.name;
+  $('brand-sub').textContent = VENDOR.tagline;
 }
 
 // ---------------------------------------------------------------------
@@ -200,6 +204,13 @@ function copyViaTextarea() {
 // ---------------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (!VENDOR) {
+    // ?v= named a handle that is not in vendors.js.
+    document.title = 'Vendor not found';
+    showScreen('unknown');
+    return;
+  }
+  paintBrand();
   buildMenu();
   $('btn-back').addEventListener('click', () => showScreen('menu'));
   $('btn-copy').addEventListener('click', copyAddress);

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark">
-  <title>Kush Klub</title>
+  <title>Vendor shop</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,7 +23,7 @@
         </div>
         <div class="brand-text">
           <h1>
-            Kush Klub
+            <span id="brand-name"></span>
             <span class="verified" title="Verified vendor" aria-label="Verified vendor">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                 <path fill="currentColor" d="M12 1.8 14.9 4l3.6-.2.9 3.5 3 2-1.4 3.3 1.4 3.3-3 2-.9 3.5-3.6-.2L12 23.4 9.1 21.2l-3.6.2-.9-3.5-3-2L3 12.6 1.6 9.3l3-2 .9-3.5 3.6.2L12 1.8Z"/>
@@ -31,7 +31,7 @@
               </svg>
             </span>
           </h1>
-          <p class="brand-sub">btc only &middot; dm to order</p>
+          <p class="brand-sub" id="brand-sub"></p>
         </div>
       </header>
 
@@ -89,9 +89,37 @@
       </div>
     </section>
 
+    <!-- Not found: ?v= names a vendor this deploy does not have -->
+    <section id="screen-unknown" class="screen" hidden aria-label="Vendor not found">
+      <header class="brand">
+        <div class="brand-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="m5.6 5.6 12.8 12.8"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>No such vendor</h1>
+          <p class="brand-sub">check the link</p>
+        </div>
+      </header>
+      <p class="none-sub">
+        This page serves more than one vendor, and the handle after
+        <code>?v=</code> does not match any of them.
+      </p>
+      <footer class="menu-foot">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="5" y="10" width="14" height="10" rx="2"/>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+        </svg>
+        Demo page &middot; nothing here is real
+      </footer>
+    </section>
+
   </main>
 
   <script src="vendor/qrcode.js"></script>
+  <script src="vendors.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
