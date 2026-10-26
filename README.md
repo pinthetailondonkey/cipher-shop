@@ -32,8 +32,11 @@ build step, and no network activity: the vendor data is inlined in
    leave it in place.
 2. Fill in `name` and `tagline` (plain text; everything is set with
    `textContent`, so no HTML), `verified` (shows the tick), an optional
-   `theme` (see below), the demo `addresses` under `payment`, and
-   `items` (`name`, `weight`, `price`, `btc`).
+   `badge` (a chip next to the name, e.g. "same day"), an optional
+   `announcement` (a notice card under the header; empty hides it), an
+   optional `theme` (see below), the demo `addresses` under `payment`,
+   and `items` (`name`, `weight`, `price`, `btc`, optional `image`,
+   optional `pinned`).
 3. Hand the vendor their link: `<wherever this is hosted>/index.html?v=<handle>`.
 
 ### Theme
@@ -51,6 +54,20 @@ it) keeps the Cipher default:
   dark ones).
 - `logo` — an image URL, always forced to a circle (`object-fit: cover`)
   so any aspect ratio works.
+
+### Item images and the top shelf
+
+An item may carry an `image` URL (rendered as a square thumb,
+`referrerPolicy: no-referrer`). An item with no image gets a
+deterministic two-colour gradient derived from a hash of its name, so
+it never looks broken and always looks the same. One item may set
+`pinned: true` — it renders as a larger "top shelf" card above the
+list instead of a row.
+
+**Vendor-supplied images are the only third-party requests this page
+can make** — the only thing that learns a visitor's IP address besides
+the shop's own host. Everything else (fonts, icons, QR, crypto) is
+inlined or vendored. Choose image hosts accordingly.
 
 Address rotation is tracked per vendor under `shop.<handle>.addrIndex`
 in `localStorage`, so vendors on this one deploy never share a slot
@@ -75,11 +92,17 @@ information" → copy the string starting `zpub` (or `xpub`).
 ## What it does
 
 - **Menu screen** — vendor name with a verified tick (only when the
-  vendor entry says `verified: true`), and the item list (name, weight,
-  price). Tapping an item opens the order sheet.
+  vendor entry says `verified: true`), an optional status badge and
+  announcement card, a pinned "top shelf" card when an item sets
+  `pinned: true`, then the item list (thumb, name, weight, price).
+  The tab title reads `<name> · Cipher`. Tapping an item opens the
+  order sheet.
 - **Order sheet** — shows the item and price, a scannable QR code, the
-  Bitcoin address in monospace with a copy button, and a status pill
-  reading "waiting for payment". A back control returns to the menu.
+  Bitcoin address in monospace with a copy button, a "message the plug"
+  button (copies a ready-made order message for the vendor's channel)
+  and a status pill reading "waiting for payment". A back control
+  returns to the menu.
+- **Footer** — every screen carries "powered by Cipher".
 
 ## What is fake
 
@@ -97,8 +120,9 @@ information" → copy the string starting `zpub` (or `xpub`).
 ## Files
 
 - `index.html` — the three screens (menu, order sheet, vendor-not-found);
-  inline SVG icons only. The brand name, tagline and tab title are filled
-  in by JS from the vendor entry, since one page serves many vendors.
+  inline SVG icons only. The brand name, badge, announcement, tab title
+  and menu are filled in by JS from the vendor entry, since one page
+  serves many vendors.
 - `style.css` — dark, mobile-first styles; fits a 390x844 phone with no
   horizontal scrolling.
 - `vendors.js` — the vendor directory: every vendor keyed by handle,
@@ -125,3 +149,8 @@ information" → copy the string starting `zpub` (or `xpub`).
 - A vendor without a `theme` at all renders exactly like the default —
   the no-theme path is the most-seen version and is exercised by the
   first example vendor.
+- Item thumbs and vendor logos are plain `<img>` requests with
+  `referrerpolicy="no-referrer"`; nothing else about the request
+  (caching, hotlink protection) is controlled by this page.
+- "Message the plug" copies a plain-text order message to the
+  clipboard; it does not open any chat app or send anything.

@@ -149,26 +149,68 @@ function svgChevron() {
     + 'stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
 }
 
+// Deterministic pastel gradient from a hash of the item name: an item
+// with no image never looks broken.
+function itemGradient(name) {
+  let h = 5381;
+  for (let i = 0; i < name.length; i++) {
+    h = ((h << 5) + h + name.charCodeAt(i)) | 0;
+  }
+  const hue = ((h >>> 0) % 360 + 360) % 360;
+  const hue2 = (hue + 40 + ((h >>> 8) % 60)) % 360;
+  return 'linear-gradient(135deg, '
+    + 'hsl(' + hue + ', 38%, 26%), '
+    + 'hsl(' + hue2 + ', 42%, 18%))';
+}
+
+function thumbHtml(item) {
+  if (item.image) {
+    return '<span class="item-thumb"><img src="' + item.image.replace(/"/g, '%22')
+      + '" alt="" referrerpolicy="no-referrer" loading="lazy"></span>';
+  }
+  return '<span class="item-thumb" aria-hidden="true"></span>';
+}
+
+function itemButton(item, cls) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = cls;
+  btn.innerHTML =
+    thumbHtml(item)
+    + '<span class="item-info">'
+    + (cls === 'topshelf' ? '<span class="topshelf-tag">Top shelf</span>' : '')
+    + '<p class="item-name"></p>'
+    + '<p class="item-sub"></p>'
+    + '</span>'
+    + '<span class="price"></span>'
+    + svgChevron();
+  btn.querySelector('.item-name').textContent = item.name;
+  btn.querySelector('.item-sub').textContent = item.weight;
+  btn.querySelector('.price').textContent = item.price;
+  if (!item.image) {
+    btn.querySelector('.item-thumb').style.background = itemGradient(item.name);
+  }
+  btn.addEventListener('click', () => openOrder(item));
+  return btn;
+}
+
 function buildMenu() {
   const list = $('item-list');
+  const shelf = $('topshelf-holder');
   list.innerHTML = '';
+  shelf.innerHTML = '';
+  shelf.hidden = true;
+
+  const pinned = VENDOR.items.find((item) => item.pinned);
+  if (pinned) {
+    shelf.hidden = false;
+    shelf.appendChild(itemButton(pinned, 'topshelf'));
+  }
+
   VENDOR.items.forEach((item) => {
+    if (item === pinned) return;
     const li = document.createElement('li');
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'item';
-    btn.innerHTML =
-      '<span class="item-info">'
-      + '<p class="item-name"></p>'
-      + '<p class="item-sub"></p>'
-      + '</span>'
-      + '<span class="price"></span>'
-      + svgChevron();
-    btn.querySelector('.item-name').textContent = item.name;
-    btn.querySelector('.item-sub').textContent = item.weight;
-    btn.querySelector('.price').textContent = item.price;
-    btn.addEventListener('click', () => openOrder(item));
-    li.appendChild(btn);
+    li.appendChild(itemButton(item, 'item'));
     list.appendChild(li);
   });
 }
@@ -209,14 +251,30 @@ function showScreen(name) {
   $('screen-unknown').hidden = name !== 'unknown';
 }
 
-// Fill the header (name, verified tick, tagline) and the tab title from
-// the vendor entry, since one index.html now serves several vendors.
+// Fill the header, badge, announcement and the tab title from the
+// vendor entry, since one index.html serves several vendors.
 function paintBrand() {
-  document.title = VENDOR.name;
+  document.title = VENDOR.name + ' · Cipher';
   $('brand-name').textContent = VENDOR.name;
   $('brand-sub').textContent = VENDOR.tagline;
   // The template shape nests the pool under payment.addresses.
-  $('verified-tick').style.display = VENDOR.verified ? '' : 'none';
+  $('brand-verified').style.display = VENDOR.verified ? '' : 'none';
+
+  const badge = $('vendor-badge');
+  if (VENDOR.badge) {
+    badge.hidden = false;
+    badge.textContent = VENDOR.badge;
+  } else {
+    badge.hidden = true;
+  }
+
+  const ann = $('announcement');
+  if (VENDOR.announcement) {
+    ann.hidden = false;
+    $('announcement-text').textContent = VENDOR.announcement;
+  } else {
+    ann.hidden = true;
+  }
 }
 
 // ---------------------------------------------------------------------

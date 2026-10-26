@@ -116,6 +116,11 @@ body.has-theme-bg::after { opacity: 1; }
 }
 
 .muted { color: var(--muted); font-size: var(--fs-meta); }
+
+/* display values below override the hidden attribute on purpose; this
+   restores the expected hiding for every such element */
+[hidden] { display: none !important; }
+
 .label {
   margin: 0 0 6px;
   color: var(--muted);

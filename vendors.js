@@ -16,6 +16,8 @@
     name: '',                         // display name, shown in the header
     tagline: '',                      // one line under the name (plain text)
     verified: false,                  // true shows the verified tick
+    badge: '',                        // optional chip next to the name, e.g. 'same day'
+    announcement: '',                 // optional notice card under the header; '' hides it
     theme: {                          // optional customisation; omit for the Cipher default
       background: '',                 // image URL behind a dark scrim; '' keeps the plain bg
       accent: '',                     // hex like '#22c55e'; invalid/empty falls back to default
@@ -29,7 +31,9 @@
         name: '',                     // item name
         weight: '',                   // subtitle under the name
         price: '$',                   // display price
-        btc: '0.0'                    // BTC amount for the payment URI
+        btc: '0.0',                   // BTC amount for the payment URI
+        image: '',                    // optional image URL; '' renders a deterministic gradient
+        pinned: false                 // true renders this item as the "top shelf" card
       }
     ]
   },
@@ -42,6 +46,8 @@ const VENDORS = {
     name: 'Kush Klub',
     tagline: 'btc only · dm to order',
     verified: true,
+    badge: '',
+    announcement: 'Orders before 8pm go out same night. No minimum.',
     theme: {
       background: '',
       accent: '',
@@ -62,10 +68,10 @@ const VENDORS = {
       'bc1q6pc5g7zk8uz085mh0dwfkpm9lnj4g8q5eju5kn'
     ],
     items: [
-      { name: 'Lemon haze',   weight: '3.5g',    price: '$60',  btc: '0.00063' },
-      { name: 'Gelato 41',    weight: '7g',      price: '$110', btc: '0.00115' },
-      { name: 'Hash',         weight: '1g',      price: '$25',  btc: '0.00026' },
-      { name: 'Sour gummies', weight: '10x10mg', price: '$40',  btc: '0.00042' }
+      { name: 'Lemon haze',   weight: '3.5g',    price: '$60',  btc: '0.00063', image: '', pinned: false },
+      { name: 'Gelato 41',    weight: '7g',      price: '$110', btc: '0.00115', image: '', pinned: true  },
+      { name: 'Hash',         weight: '1g',      price: '$25',  btc: '0.00026', image: '', pinned: false },
+      { name: 'Sour gummies', weight: '10x10mg', price: '$40',  btc: '0.00042', image: '', pinned: false }
     ]
   },
 
@@ -73,6 +79,8 @@ const VENDORS = {
     name: 'Northside',
     tagline: 'deliveries 4pm - midnight',
     verified: false,
+    badge: 'same day',
+    announcement: '',
     theme: {
       background: '',
       accent: '#e11d48',
@@ -84,8 +92,8 @@ const VENDORS = {
       'bc1q284tar9q8kn6tkfcezqdjrk38nhkd8dwqj0ne2'
     ],
     items: [
-      { name: 'Pre-roll', weight: '1g',   price: '$15', btc: '0.00016' },
-      { name: 'Hash rosin', weight: '0.5g', price: '$45', btc: '0.00047' }
+      { name: 'Pre-roll', weight: '1g',   price: '$15', btc: '0.00016', image: '', pinned: false },
+      { name: 'Hash rosin', weight: '0.5g', price: '$45', btc: '0.00047', image: '', pinned: false }
     ]
   }
 
