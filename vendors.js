@@ -23,9 +23,12 @@
       accent: '',                     // hex like '#22c55e'; invalid/empty falls back to default
       logo: ''                        // image URL, always rendered as a circle; '' keeps the icon
     },
-    addresses: [                      // demo address pool, handed out one per order
-      'bc1q...'                       //   in order; cycles when exhausted
-    ],
+    payment: {
+      xpub: '',                       // BIP84 account zpub or xpub; '' uses the address list
+      addresses: [                    // demo fallback pool when there is no xpub
+        'bc1q...'                     //   handed out one per order, in order
+      ]
+    },
     items: [                          // menu, top to bottom
       {
         name: '',                     // item name
@@ -53,7 +56,11 @@ const VENDORS = {
       accent: '',
       logo: ''
     },
-    addresses: [
+    payment: {
+      // BIP84 reference account. Real derivations at m/0/i, bc1q, 20
+      // rotating slots; the pool below is the demo fallback only.
+      xpub: 'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs',
+      addresses: [
       'bc1qwhrr0d0zwnf9pr2vwz4l7afws8kzfcmlak005p',
       'bc1qh9zkxq93j5zecy8av2dhyu436jhgyr3uzkcqvc',
       'bc1q284tar9q8kn6tkfcezqdjrk38nhkd8dwqj0ne2',
@@ -66,7 +73,8 @@ const VENDORS = {
       'bc1qyjef8hvm664nenarrvm49y8j80ejzpas54vs8n',
       'bc1q0gzrvlwpzhydks79eurg8fampssch0ur9kyk70',
       'bc1q6pc5g7zk8uz085mh0dwfkpm9lnj4g8q5eju5kn'
-    ],
+    ]
+    },
     items: [
       { name: 'Lemon haze',   weight: '3.5g',    price: '$60',  btc: '0.00063', image: '', pinned: false },
       { name: 'Gelato 41',    weight: '7g',      price: '$110', btc: '0.00115', image: '', pinned: true  },
@@ -86,11 +94,14 @@ const VENDORS = {
       accent: '#e11d48',
       logo: ''
     },
-    addresses: [
+    payment: {
+      xpub: '',                       // no xpub: the fallback pool is used
+      addresses: [
       'bc1qwhrr0d0zwnf9pr2vwz4l7afws8kzfcmlak005p',
       'bc1qh9zkxq93j5zecy8av2dhyu436jhgyr3uzkcqvc',
       'bc1q284tar9q8kn6tkfcezqdjrk38nhkd8dwqj0ne2'
-    ],
+    ]
+    },
     items: [
       { name: 'Pre-roll', weight: '1g',   price: '$15', btc: '0.00016', image: '', pinned: false },
       { name: 'Hash rosin', weight: '0.5g', price: '$45', btc: '0.00047', image: '', pinned: false }

@@ -34,9 +34,10 @@ build step, and no network activity: the vendor data is inlined in
    `textContent`, so no HTML), `verified` (shows the tick), an optional
    `badge` (a chip next to the name, e.g. "same day"), an optional
    `announcement` (a notice card under the header; empty hides it), an
-   optional `theme` (see below), the demo `addresses` under `payment`,
-   and `items` (`name`, `weight`, `price`, `btc`, optional `image`,
-   optional `pinned`).
+   optional `theme` (see below), `payment` — a BIP84 `xpub`/`zpub` for
+   real rotating addresses, or a demo `addresses` pool (see "Getting
+   an xpub") — and `items` (`name`, `weight`, `price`, `btc`, optional
+   `image`, optional `pinned`).
 3. Hand the vendor their link: `<wherever this is hosted>/index.html?v=<handle>`.
 
 ### Theme
@@ -75,10 +76,11 @@ counter.
 
 ## Getting an xpub
 
-Not used by the page yet (a later version will derive fresh addresses
-from it), but this is where each wallet hides it. Every wallet: account
-→ tap the three dots / account settings → "show xpub" / "account
-information" → copy the string starting `zpub` (or `xpub`).
+The page derives order addresses at `m/0/i` from a BIP84 account-level
+extended public key. Paste it into `payment.xpub` in `vendors.js`;
+leave it `''` to use the fallback address pool instead. Every wallet:
+account → tap the three dots / account settings → "show xpub" /
+"account information" → copy the string starting `zpub` (or `xpub`).
 
 - **BlueWallet** — open the wallet → three-dot menu → "Show wallet
   xpub" → copy the `zpub`. (Enable "Export/Show xpub" in settings if
@@ -106,16 +108,19 @@ information" → copy the string starting `zpub` (or `xpub`).
 
 ## What is fake
 
-- **The addresses are pre-derived.** Demo address strings are hardcoded
-  per vendor in `vendors.js` and handed out one per order — the next
-  unused one is tracked in `localStorage`, so reloading the page does
-  not reuse an address. Once exhausted the pool cycles, and the sheet
-  shows `slot n / 12` (or the pool's depth) so you can see the rotation.
+- **Addresses: real derivation, demo xpub.** When a vendor's
+  `payment.xpub` is set, the order sheet derives a fresh address at
+  `m/0/i` (native segwit, `bc1q`) with the vendored BIP32 code — slots
+  0–19, tracked per vendor in `localStorage`, shown as
+  `slot n / 20`. The kushklub example uses the BIP84 reference account,
+  so its addresses are genuine derivations — but of a public test key,
+  not anyone's wallet. Without an xpub (or if derivation fails for any
+  reason) the page falls back to the hardcoded demo pool, cycling with
+  a `(cycled)` marker, and never breaks. Nothing talks to the Bitcoin
+  network either way.
 - **The status pill does not watch the chain.** It always reads
   "waiting for payment"; there is no node, no Electrum server, no
   broadcast or confirmation logic of any kind.
-- **A later version will derive addresses from the vendor's xpub**
-  (fresh address per order) instead of shipping a fixed pool.
 
 ## Files
 
@@ -133,6 +138,24 @@ information" → copy the string starting `zpub` (or `xpub`).
   Arase, single file, MIT licensed. The QR codes encode a real
   `bitcoin:` URI (`bitcoin:<address>?amount=<btc>`) and scan with any
   wallet camera, though the addresses themselves are demo samples.
+- `vendor/cipher-crypto.js` — a classic-script bundle generated from
+  the vendored ESM trees in `vendor/` (`@scure/bip32`, `@scure/base`,
+  `@noble/curves`, `@noble/hashes` — all MIT). The page cannot load
+  ES modules from `file://` (browsers block them on that origin), so
+  the bundle is what actually runs in the browser; the ESM sources are
+  committed alongside it for provenance and for the node tests. It is
+  rebuilt with `rolldown -c scripts/vendor-bundle.config.mjs` — a
+  one-off tool, not a dependency of this repo.
+- `derive.js` — xpub → bc1q address derivation (m/0/i, native segwit),
+  exposed as `window.XpubAddresses`.
+- `scripts/derivation.test.mjs` — node tests for the derivation. Run
+  from the repo root: `node --test scripts/derivation.test.mjs`. The
+  headline assertion is the BIP84 reference vector: the account
+  `zpub6rFR…ZYs` at m/0/0 must produce
+  `bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu`. Also covers plain
+  xpubs, determinism, distinct indexes, address format, and that
+  invalid keys, bad indexes and testnet keys return `null` (which
+  sends the page down the fallback-pool path) rather than throwing.
 
 [qrcode-generator 1.4.4]: https://www.npmjs.com/package/qrcode-generator
 
@@ -154,3 +177,11 @@ information" → copy the string starting `zpub` (or `xpub`).
   (caching, hotlink protection) is controlled by this page.
 - "Message the plug" copies a plain-text order message to the
   clipboard; it does not open any chat app or send anything.
+- "Gzipped payload under 40KB" (the raised budget) is measured over
+  this repo's own files — `index.html`, `style.css`, `app.js`,
+  `vendors.js`, `derive.js` (~13KB gzipped in total). The vendored
+  third-party code in `vendor/` (QR + crypto bundle) is excluded, the
+  same way vendor-supplied images are.
+- The xpub path rotates 20 slots and then cycles them; it does not
+  refuse to serve an order after 20, because a broken pay button is
+  worse than a reused address in a demo.

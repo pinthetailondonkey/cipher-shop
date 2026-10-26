@@ -97,15 +97,18 @@ function applyTheme(v) {
 }
 
 // ---------------------------------------------------------------------
-// Address rotation — the vendor's next unused address, tracked in
-// localStorage (per vendor, so two vendors on one deploy do not share a
-// counter) so a reload does not reuse one. Storage failure (private
-// mode, blocked site data) falls back to an in-memory counter.
+// Address selection — xpub derivation with a fallback pool.
+//
+// With payment.xpub: derive at m/0/i (native segwit, bc1q) for index
+// i in 0..19; the index advances per order, tracked in localStorage per
+// vendor. Without an xpub (or an invalid one): hand out the hardcoded
+// pool addresses in order, cycling. Nothing here talks to the network;
+// with an xpub the addresses are real derivations, without one they are
+// demo samples.
 // ---------------------------------------------------------------------
 
 const ADDR_KEY = 'shop.' + HANDLE + '.addrIndex';
-// The demo pool: next unused address per order, cycling when exhausted.
-const ADDRESSES = VENDOR && VENDOR.payment ? VENDOR.payment.addresses : (VENDOR ? VENDOR.addresses : []);
+const POOL_SIZE = 20; // xpub path: slots 0..19, shown as "slot n / 20"
 let memIndex = 0;
 
 function loadIndex() {
@@ -125,15 +128,35 @@ function saveIndex(n) {
   } catch (e) { /* fall back to the in-memory counter */ }
 }
 
-function nextAddress() {
+// Derive at m/0/index from the vendor's xpub, or null when there is no
+// xpub, the engine is missing, or the derivation fails. The bc1q check
+// is belt and braces: a malformed result must never reach the sheet.
+function xpubDerive(vendor, index) {
+  const api = window.XpubAddresses;
+  if (!api || typeof api.deriveAddress !== 'function') return null;
+  const xpub = vendor && vendor.payment && vendor.payment.xpub;
+  if (!xpub) return null;
+  let addr = null;
+  try { addr = api.deriveAddress(xpub, index); } catch (e) { addr = null; }
+  return /^bc1q[0-9a-z]+$/i.test(String(addr)) ? addr : null;
+}
+
+function nextAddress(vendor) {
   const index = loadIndex();
-  const addr = ADDRESSES[index % ADDRESSES.length];
   saveIndex(index + 1);
+  const derived = xpubDerive(vendor, index % POOL_SIZE);
+  if (derived) {
+    return { address: derived, slot: (index % POOL_SIZE) + 1, total: POOL_SIZE, cycled: false };
+  }
+  const pool = (vendor && vendor.payment && vendor.payment.addresses) || [];
+  if (!pool.length) {
+    return { address: '', slot: 0, total: 0, cycled: false };
+  }
   return {
-    address: addr,
+    address: pool[index % pool.length],
     slot: index + 1,
-    total: ADDRESSES.length,
-    cycled: index >= ADDRESSES.length
+    total: pool.length,
+    cycled: index >= pool.length
   };
 }
 
@@ -218,8 +241,8 @@ function buildMenu() {
 let currentUri = '';
 
 function openOrder(item) {
-  const pick = nextAddress();
-  currentUri = 'bitcoin:' + pick.address + '?amount=' + item.btc;
+  const pick = nextAddress(VENDOR);
+  currentUri = pick.address ? 'bitcoin:' + pick.address + '?amount=' + item.btc : '';
 
   $('order-item-name').textContent = item.name;
   $('order-item-weight').textContent = item.weight;
@@ -232,15 +255,17 @@ function openOrder(item) {
 
   const holder = $('qr-holder');
   holder.innerHTML = '';
-  const qr = qrcode(0, 'M'); // 0 = pick smallest fitting QR version
-  qr.addData(currentUri, 'Byte');
-  qr.make();
-  holder.innerHTML = qr.createSvgTag({
-    cellSize: 4,
-    margin: 2,
-    scalable: true,
-    alt: 'Bitcoin payment QR code for this order'
-  });
+  if (currentUri) {
+    const qr = qrcode(0, 'M'); // 0 = pick smallest fitting QR version
+    qr.addData(currentUri, 'Byte');
+    qr.make();
+    holder.innerHTML = qr.createSvgTag({
+      cellSize: 4,
+      margin: 2,
+      scalable: true,
+      alt: 'Bitcoin payment QR code for this order'
+    });
+  }
 
   showScreen('order');
 }
@@ -298,8 +323,10 @@ function flashCopied() {
 }
 
 function copyAddress() {
+  const addr = $('order-addr').textContent;
+  if (!addr) return;
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText($('order-addr').textContent)
+    navigator.clipboard.writeText(addr)
       .then(flashCopied)
       .catch(() => copyViaTextarea());
   } else {
@@ -307,9 +334,9 @@ function copyAddress() {
   }
 }
 
-function copyViaTextarea() {
+function copyViaTextarea(text, onDone) {
   const ta = document.createElement('textarea');
-  ta.value = $('order-addr').textContent;
+  ta.value = text !== undefined ? text : $('order-addr').textContent;
   ta.setAttribute('readonly', '');
   ta.style.position = 'fixed';
   ta.style.opacity = '0';
@@ -322,6 +349,32 @@ function copyViaTextarea() {
     // Nothing else to try; leave the button alone so the user can select manually.
   }
   document.body.removeChild(ta);
+}
+
+let plugTimer = null;
+function flashPlug() {
+  clearTimeout(plugTimer);
+  const btn = $('btn-msg-plug');
+  btn.classList.add('copied');
+  $('msg-plug-label').textContent = 'Copied — paste it in the chat';
+  plugTimer = setTimeout(function () {
+    btn.classList.remove('copied');
+    $('msg-plug-label').textContent = 'Message the plug';
+  }, 2200);
+}
+
+// "Message the plug": copy an order message for the vendor's channel.
+function msgPlugClick() {
+  const item = $('order-item-name').textContent;
+  const price = $('order-item-price').textContent;
+  const addr = $('order-addr').textContent;
+  const msg = 'hi ' + (VENDOR.name || '') + ', just ordered the ' + item
+    + ' (' + price + ') and paid to ' + addr;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(flashPlug, function () { copyViaTextarea(msg, flashPlug); });
+  } else {
+    copyViaTextarea(msg, flashPlug);
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -340,5 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
   buildMenu();
   $('btn-back').addEventListener('click', () => showScreen('menu'));
   $('btn-copy').addEventListener('click', copyAddress);
+  $('btn-msg-plug').addEventListener('click', msgPlugClick);
   showScreen('menu');
 });
