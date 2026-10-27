@@ -3,7 +3,9 @@
  * ?v= in the URL (see vendors.js). No fetch, so double-clicking
  * index.html just works; no ?v= falls back to the first vendor.
  * This is a mock/demo: the addresses and BTC amounts are hardcoded samples
- * and nothing here talks to the Bitcoin network. See README.md.
+ * and nothing here talks to the Bitcoin network. The trust band shows a
+ * proven-deal count under the txid-bulletin contract (see renderStats).
+ * See README.md.
  */
 
 'use strict';
@@ -273,6 +275,7 @@ function openOrder(item) {
 function showScreen(name) {
   $('screen-menu').hidden = name !== 'menu';
   $('screen-order').hidden = name !== 'order';
+  $('screen-get').hidden = name !== 'get';
   $('screen-unknown').hidden = name !== 'unknown';
 }
 
@@ -300,6 +303,110 @@ function paintBrand() {
   } else {
     ann.hidden = true;
   }
+}
+
+// ---------------------------------------------------------------------
+// Trust band — the stats display contract follows the txid-bulletin
+// device on Cipher main (src/lib/vendorStats.js @ e374cc9):
+//   BTC-settled  — "N deals proven. One tap shows the txids."
+//   XMR-settled  — "N deals recorded on chain."
+// This page is BTC-only, so bulletin-backed counts get the BTC sentence,
+// with the second sentence as the link itself. A count with no published
+// txids behind it (no bulletin) never reads as proven: it keeps the
+// locked "vendor-reported" label until the bulletin is live.
+// ---------------------------------------------------------------------
+
+function isHttps(url) {
+  return typeof url === 'string' && /^https:\/\/\S+$/i.test(url.trim());
+}
+
+// A proven figure only shows when it is a real positive integer.
+function wholeCount(n) {
+  return Number.isSafeInteger(n) && n > 0 ? String(n) : '';
+}
+
+function chip(cls, text) {
+  const span = document.createElement('span');
+  span.className = cls;
+  span.textContent = text;
+  return span;
+}
+
+function renderStats() {
+  const holder = $('stats-holder');
+  holder.innerHTML = '';
+  const stats = VENDOR.stats || {};
+  const proven = wholeCount(stats.proven);
+  const bulletin = stats.source === 'bulletin';
+
+  if (proven) {
+    if (bulletin) {
+      // Verbatim BTC phrasing; the tap lands on the txids.
+      holder.appendChild(chip('stat-chip is-proven', proven + ' deals proven.'));
+      if (isHttps(stats.link)) {
+        const a = document.createElement('a');
+        a.href = stats.link.trim();
+        a.textContent = 'One tap shows the txids.';
+        holder.appendChild(a);
+      }
+    } else {
+      // No published txids behind the number: honest label, muted styling.
+      holder.appendChild(chip('stat-chip is-reported', proven + ' deals · vendor-reported'));
+    }
+  }
+
+  if (typeof stats.since === 'string' && stats.since.trim()) {
+    holder.appendChild(chip('stat-chip is-since', 'around since ' + stats.since.trim()));
+  }
+
+  holder.hidden = !holder.childNodes.length;
+}
+
+function renderAbout() {
+  const holder = $('about-holder');
+  holder.innerHTML = '';
+  const about = typeof VENDOR.about === 'string' ? VENDOR.about.trim() : '';
+  const policies = typeof VENDOR.policies === 'string' ? VENDOR.policies.trim() : '';
+  if (!about && !policies) {
+    holder.hidden = true;
+    return;
+  }
+  const label = document.createElement('h2');
+  label.className = 'label';
+  label.textContent = 'About';
+  holder.appendChild(label);
+  if (about) {
+    const p = document.createElement('p');
+    p.textContent = about;
+    holder.appendChild(p);
+  }
+  if (policies) {
+    const p = document.createElement('p');
+    p.textContent = policies;
+    holder.appendChild(p);
+  }
+  holder.hidden = false;
+}
+
+// ---------------------------------------------------------------------
+// "Get Cipher" — the funnel behind the footer's powered-by line.
+// GET_URL is set by this repo's owner; while it is empty the screen
+// shows the pitch and an honest "not out yet" note, never a dead link.
+// ---------------------------------------------------------------------
+
+const GET_URL = ''; // e.g. 'https://cipher.example/download'
+
+function setupGet() {
+  const btn = $('btn-download');
+  const note = $('get-note');
+  if (isHttps(GET_URL)) {
+    btn.href = GET_URL.trim();
+    btn.hidden = false;
+  } else {
+    note.hidden = false;
+  }
+  $('btn-get').addEventListener('click', () => showScreen('get'));
+  $('btn-get-back').addEventListener('click', () => showScreen('menu'));
 }
 
 // ---------------------------------------------------------------------
@@ -391,6 +498,9 @@ document.addEventListener('DOMContentLoaded', () => {
   paintBrand();
   applyTheme(VENDOR);
   buildMenu();
+  renderStats();
+  renderAbout();
+  setupGet();
   $('btn-back').addEventListener('click', () => showScreen('menu'));
   $('btn-copy').addEventListener('click', copyAddress);
   $('btn-msg-plug').addEventListener('click', msgPlugClick);

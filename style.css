@@ -226,6 +226,72 @@ body.has-theme-bg::after { opacity: 1; }
 
 .announcement svg { flex: none; margin-top: 2px; color: var(--accent); }
 
+/* ---------- Trust band (stats) ---------- */
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-pill);
+  padding: 4px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* bulletin-backed: the count is the txids themselves */
+.stat-chip.is-proven {
+  background: var(--accent-soft);
+  border-color: var(--line);
+  color: var(--accent);
+}
+
+.stats a {
+  color: var(--accent);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.stats a:hover { border-bottom-color: var(--accent); }
+.stats a:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; border-radius: 4px; }
+
+/* no bulletin behind the number: the muted, honest label */
+.stat-chip.is-reported { color: var(--muted); }
+.stat-chip.is-since { color: var(--muted); font-weight: 500; }
+
+/* ---------- About ---------- */
+
+.about {
+  margin: 16px 0 0;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+}
+
+.about .label { margin: 0 0 6px; }
+
+.about p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.about p:last-child { margin-bottom: 0; }
+
 /* ---------- Items ---------- */
 
 .items {
@@ -346,6 +412,71 @@ body.has-theme-bg::after { opacity: 1; }
 .menu-foot .powered strong {
   color: var(--muted);
   font-weight: 600;
+}
+
+/* the powered-by line is the funnel's door */
+button.powered {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+button.powered:active strong { color: var(--accent); }
+button.powered:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+
+/* ---------- Get the app ---------- */
+
+.get-pitch {
+  padding: 22px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sheet);
+  margin-bottom: 14px;
+}
+
+.get-pitch p {
+  margin: 0 0 4px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.get-pitch .get-last {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.get-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--r-input);
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  text-decoration: none;
+  transition: filter .12s ease;
+}
+
+.get-btn:active { filter: brightness(.9); }
+.get-btn:focus-visible { outline: 2px solid var(--accent-hover); outline-offset: 2px; }
+
+.get-note {
+  margin: 0;
+  padding: 12px 0;
+  text-align: center;
+  color: var(--faint);
+  font-size: var(--fs-meta);
 }
 
 /* ---------- Order sheet ---------- */

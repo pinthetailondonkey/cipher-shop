@@ -18,6 +18,15 @@
     verified: false,                  // true shows the verified tick
     badge: '',                        // optional chip next to the name, e.g. 'same day'
     announcement: '',                 // optional notice card under the header; '' hides it
+    stats: {                          // optional trust band under the header
+      proven: 0,                      // deals proven, plain integer; 0 docs the band
+      source: '',                     // 'bulletin' reads "N deals proven on-chain";
+                                      //   anything else labels the count "vendor-reported"
+      since: '',                      // optional "around since" chip, e.g. '2023'
+      link: ''                        // bulletin only: https URL buyers check the txids at
+    },
+    about: '',                        // optional paragraph under the menu; '' hides it
+    policies: '',                     // optional second paragraph (payment/postage rules)
     theme: {                          // optional customisation; omit for the Cipher default
       background: '',                 // image URL behind a dark scrim; '' keeps the plain bg
       accent: '',                     // hex like '#22c55e'; invalid/empty falls back to default
@@ -51,6 +60,17 @@ const VENDORS = {
     verified: true,
     badge: '',
     announcement: 'Orders before 8pm go out same night. No minimum.',
+    // Demo trust band: vendor-reported (no bulletin yet), obviously fake.
+    stats: {
+      proven: 47,
+      source: '',
+      since: '2023',
+      link: ''
+    },
+    about: 'Demo entry. This paragraph is where the vendor writes who they '
+      + 'are and how long they have been around. Nothing here is real.',
+    policies: 'Payment in bitcoin only. Same-night drop before 8pm. Any '
+      + 'problems, message directly and it gets made right.',
     theme: {
       background: '',
       accent: '',

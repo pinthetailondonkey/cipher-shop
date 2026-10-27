@@ -34,7 +34,9 @@ build step, and no network activity: the vendor data is inlined in
    `textContent`, so no HTML), `verified` (shows the tick), an optional
    `badge` (a chip next to the name, e.g. "same day"), an optional
    `announcement` (a notice card under the header; empty hides it), an
-   optional `theme` (see below), `payment` — a BIP84 `xpub`/`zpub` for
+   optional `stats` trust band and `about`/`policies` paragraphs (see
+   "Trust band"), an optional `theme` (see below), `payment` — a BIP84
+   `xpub`/`zpub` for
    real rotating addresses, or a demo `addresses` pool (see "Getting
    an xpub") — and `items` (`name`, `weight`, `price`, `btc`, optional
    `image`, optional `pinned`).
@@ -95,8 +97,9 @@ account → tap the three dots / account settings → "show xpub" /
 
 - **Menu screen** — vendor name with a verified tick (only when the
   vendor entry says `verified: true`), an optional status badge and
-  announcement card, a pinned "top shelf" card when an item sets
-  `pinned: true`, then the item list (thumb, name, weight, price).
+  announcement card, a trust band (see below), a pinned "top shelf"
+  card when an item sets `pinned: true`, then the item list (thumb,
+  name, weight, price), then the vendor's own about/policies paragraph.
   The tab title reads `<name> · Cipher`. Tapping an item opens the
   order sheet.
 - **Order sheet** — shows the item and price, a scannable QR code, the
@@ -104,7 +107,32 @@ account → tap the three dots / account settings → "show xpub" /
   button (copies a ready-made order message for the vendor's channel)
   and a status pill reading "waiting for payment". A back control
   returns to the menu.
+- **Get screen** — reached from the footer's "powered by Cipher" line
+  on every menu: the three-line pitch (no phone number, no account,
+  your own menu) and either the download link or an honest "not out
+  yet" note (see `GET_URL` under Assumptions). A back control returns
+  to the menu.
 - **Footer** — every screen carries "powered by Cipher".
+
+### Trust band
+
+An optional `stats` object renders a chip row under the header. The
+display contract follows the txid-bulletin device on Cipher main
+(`src/lib/vendorStats.js` at `e374cc9`): a proved count is the txids
+themselves, published so anyone can check them; the BTC banner phrasing
+is "N deals proven. One tap shows the txids." and is fixed there, not
+reinvented here.
+
+- `proven` (plain integer) + `source: 'bulletin'` — the count shows with
+  the verbatim BTC banner phrasing, and `link` (an `https` URL buyers
+  check the txids at) renders as the "One tap" sentence.
+- `proven` with any other (or absent) `source` — the count still shows,
+  but labelled `N deals · vendor-reported`, muted. A number without
+  published txids never reads as proven.
+- `since` (a string) adds an "around since" chip. All fields are
+  optional; an empty or absent `stats` renders no band at all.
+
+Both demo figures are fake demo data.
 
 ## What is fake
 
@@ -124,8 +152,9 @@ account → tap the three dots / account settings → "show xpub" /
 
 ## Files
 
-- `index.html` — the three screens (menu, order sheet, vendor-not-found);
-  inline SVG icons only. The brand name, badge, announcement, tab title
+- `index.html` — the four screens (menu, order sheet, get Cipher,
+  vendor-not-found); inline SVG icons only. The brand name, badge,
+  announcement, trust band, about section, tab title
   and menu are filled in by JS from the vendor entry, since one page
   serves many vendors.
 - `style.css` — dark, mobile-first styles; fits a 390x844 phone with no
@@ -185,3 +214,24 @@ account → tap the three dots / account settings → "show xpub" /
 - The xpub path rotates 20 slots and then cycles them; it does not
   refuse to serve an order after 20, because a broken pay button is
   worse than a reused address in a demo.
+- The trust band mirrors the txid-bulletin contract of Cipher main
+  (`src/lib/vendorStats.js` at `e374cc9`). The static page has no
+  relays and no fetch, so it cannot fetch a vendor's bulletin itself:
+  the vendor entry's `stats.source` says whether a bulletin backs the
+  number, and nothing checks that here — an owner who sets
+  `'bulletin'` in `vendors.js` without a live bulletin owns that. The
+  vendor-reported fallback label is the locked shape until this page
+  grows a way to read bulletins. The "one tap" link is the whole
+  self-check rail for now; when the txids are needed inline (a copied
+  txid list, or a copy button), that is the next slice.
+- `GET_URL` in `app.js` is the download link behind the get screen and
+  is intentionally empty: the screen shows the pitch and an honest
+  "not out yet" note instead of a dead button. Whoever deploys sets it
+  to a real `https` URL; any other shape leaves the note up.
+- The demo `stats`/`about`/`policies` values in `vendors.js` are fake
+  demo data like everything else on the page; real vendor entries
+  carry real (vendor-entered) text.
+- Trust-band placement is under the header, before the announcement
+  card, because a buyer decides from the header + band row first.
+  Order elsewhere was not locked; moving it is one line in
+  `index.html`.
