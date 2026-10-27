@@ -9,7 +9,7 @@ index.html, style.css, app.js, README.md, vendor/qrcode.js
 Plain HTML/CSS/JS. No build, no npm, no bundler. Double-clicking index.html must work — globals, not fetch. One vendored MIT QR file only.
 
 ## Screens
-1. Menu — vendor "Kush Klub", a verified tick, items with name, weight, $ price.
+1. Menu — the vendor's display name, a verified tick, items with name, weight, $ price.
 2. Order sheet — tap an item. Item, price, a SCANNABLE QR, the BTC address in monospace, a copy button, a "message the vendor" button, a back control.
 
 ## Payment
